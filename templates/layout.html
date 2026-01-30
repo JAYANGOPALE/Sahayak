@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sahayak{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -25,9 +26,44 @@
     </main>
 
     <footer>
-        <p>&copy; 2026 Sahayak. All rights reserved.</p>
+        <div class="footer-container">
+            <div class="footer-column">
+                <h3>Company</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Terms of Use</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>For Customers</h3>
+                <ul>
+                    <li><a href="#">Sahayak Reviews</a></li>
+                    <li><a href="#">Categories</a></li>
+                    <li><a href="#">Blog</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>For Partners</h3>
+                <ul>
+                    <li><a href="#">Register as a Professional</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Social Links</h3>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Sahayak. All rights reserved.</p>
+        </div>
     </footer>
 
+<div id="toast-container"></div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

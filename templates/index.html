@@ -12,45 +12,122 @@
     </div>
 </section>
 
+<!-- How It Works Section -->
+<section class="how-it-works-section">
+    <h2>How It Works</h2>
+    <div class="steps">
+        <div class="step">
+            <div class="icon-container">
+                <i class="fas fa-list-check"></i>
+            </div>
+            <h3>Select Service</h3>
+            <p>Choose from our wide range of home services.</p>
+        </div>
+        <div class="step">
+            <div class="icon-container">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h3>Choose Slot</h3>
+            <p>Select a convenient time slot for your service.</p>
+        </div>
+        <div class="step">
+            <div class="icon-container">
+                <i class="fas fa-couch"></i>
+            </div>
+            <h3>Relax</h3>
+            <p>Our expert will arrive at your doorstep to do the job.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Sahayak Section -->
+<section class="why-choose-us-section">
+    <div class="container">
+        <h2>Why Choose Sahayak?</h2>
+        <div class="features">
+            <div class="feature">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Verified Professionals</h3>
+                <p>We ensure all our partners are background-checked and trained.</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-hand-holding-usd"></i>
+                <h3>Insured Work</h3>
+                <p>Your service is insured up to ₹10,000 against any damages.</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-lock"></i>
+                <h3>Secure Payment</h3>
+                <p>We use industry-standard encryption for all transactions.</p>
+            </div>
+        </div>
+        <div class="stats-counter">
+            <div class="stat">
+                <h3>10,000+</h3>
+                <p>Happy Customers</p>
+            </div>
+            <div class="stat">
+                <h3>500+</h3>
+                <p>Verified Partners</p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Testimonials Section -->
+<section class="testimonials-section">
+    <h2>What Our Customers Say</h2>
+    <div class="testimonial-slider">
+        <div class="testimonial">
+            <div class="stars">★★★★★</div>
+            <p>"The best and most reliable home service I have ever used. The professional was on time and very skilled."</p>
+            <h4>- Priya S.</h4>
+        </div>
+        <div class="testimonial">
+            <div class="stars">★★★★★</div>
+            <p>"Booking was so easy and the customer support was very helpful. Highly recommended!"</p>
+            <h4>- Rohan M.</h4>
+        </div>
+        <div class="testimonial">
+            <div class="stars">★★★★★</div>
+            <p>"I was amazed by the quality of the cleaning service. My home has never looked better."</p>
+            <h4>- Anjali D.</h4>
+        </div>
+    </div>
+</section>
+
 <section class="services-section">
     <h2>Most Used Services</h2>
-    <div class="service-cards">
-        <div class="card">
-            <a href="{{ url_for('result', service='AC Repair') }}">
-                <img src="https://via.placeholder.com/150" alt="AC Repair">
-                <h3>AC Repair</h3>
-            </a>
-        </div>
-        <div class="card">
-             <a href="{{ url_for('result', service='Plumbing') }}">
-                <img src="https://via.placeholder.com/150" alt="Plumbing">
-                <h3>Plumbing</h3>
-            </a>
-        </div>
-        <div class="card">
-             <a href="{{ url_for('result', service='Electrician') }}">
-                <img src="https://via.placeholder.com/150" alt="Electrician">
-                <h3>Electrician</h3>
-            </a>
-        </div>
-        <div class="card">
-            <a href="{{ url_for('result', service='Carpentry') }}">
-                <img src="https://via.placeholder.com/150" alt="Carpentry">
-                <h3>Carpentry</h3>
-            </a>
-        </div>
-         <div class="card">
-            <a href="{{ url_for('result', service='Painting') }}">
-                <img src="https://via.placeholder.com/150" alt="Painting">
-                <h3>Painting</h3>
-            </a>
-        </div>
-        <div class="card">
-            <a href="{{ url_for('result', service='Cleaning') }}">
-                <img src="https://via.placeholder.com/150" alt="Cleaning">
-                <h3>Cleaning</h3>
-            </a>
-        </div>
+    <div class="service-icons">
+        <a href="{{ url_for('result', service='AC Repair') }}" class="service-icon">
+            <img src="https://img.icons8.com/fluency/96/air-conditioner.png" alt="AC Repair">
+            <h3>AC Repair</h3>
+            <span class="price-badge">Starts at ₹499</span>
+        </a>
+        <a href="{{ url_for('result', service='Plumbing') }}" class="service-icon">
+            <img src="https://img.icons8.com/fluency/96/plumbing.png" alt="Plumbing">
+            <h3>Plumbing</h3>
+             <span class="price-badge">Starts at ₹299</span>
+        </a>
+        <a href="{{ url_for('result', service='Electrician') }}" class="service-icon">
+            <img src="https://img.icons8.com/fluency/96/electricity.png" alt="Electrician">
+            <h3>Electrician</h3>
+             <span class="price-badge">Starts at ₹199</span>
+        </a>
+        <a href="{{ url_for('result', service='Carpentry') }}" class="service-icon">
+            <img src="https://img.icons8.com/fluency/96/worker-male.png" alt="Carpentry">
+            <h3>Carpentry</h3>
+             <span class="price-badge">Starts at ₹349</span>
+        </a>
+        <a href="{{ url_for('result', service='Painting') }}" class="service-icon">
+            <img src="https://img.icons8.com/fluency/96/paint-bucket.png" alt="Painting">
+            <h3>Painting</h3>
+             <span class="price-badge">Starts at ₹599</span>
+        </a>
+        <a href="{{ url_for('result', service='Cleaning') }}" class="service-icon">
+            <img src="https://img.icons8.com/fluency/96/cleaning-service.png" alt="Cleaning">
+            <h3>Cleaning</h3>
+             <span class="price-badge">Starts at ₹699</span>
+        </a>
     </div>
 </section>
 {% endblock %}
