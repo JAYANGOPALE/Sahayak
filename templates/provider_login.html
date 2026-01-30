@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+
+{% block title %}Provider Login - Sahayak{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Service Provider Login</h2>
+    <form action="{{ url_for('provider_login') }}" method="post">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required>
+        
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+        
+        <button type="submit">Login</button>
+    </form>
+    <p>Want to join as a partner? <a href="{{ url_for('provider_signup') }}">Register here</a></p>
+</div>
+{% endblock %}

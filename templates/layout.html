@@ -14,9 +14,13 @@
             {% if 'username' in session %}
                 <a href="{{ url_for('user_profile') }}">Profile</a>
                 <a href="{{ url_for('logout') }}">Logout</a>
+            {% elif 'provider_username' in session %}
+                <a href="{{ url_for('provider_dashboard') }}">Partner Dashboard</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
             {% else %}
                 <a href="{{ url_for('login') }}">Login</a>
                 <a href="{{ url_for('signup') }}">Sign Up</a>
+                <a href="{{ url_for('provider_login') }}">For Partners</a>
             {% endif %}
         </nav>
     </header>
@@ -46,7 +50,7 @@
             <div class="footer-column">
                 <h3>For Partners</h3>
                 <ul>
-                    <li><a href="#">Register as a Professional</a></li>
+                    <li><a href="{{ url_for('provider_signup') }}">Register as a Professional</a></li>
                 </ul>
             </div>
             <div class="footer-column">

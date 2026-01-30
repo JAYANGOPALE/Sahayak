@@ -1,0 +1,76 @@
+{% extends 'layout.html' %}
+
+{% block title %}Partner Dashboard - Sahayak{% endblock %}
+
+{% block content %}
+<div class="profile-page-container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <i class="fas fa-tools profile-avatar"></i>
+            <h2>Partner Dashboard</h2>
+        </div>
+        {% if provider %}
+            <div class="profile-info">
+                <p><i class="fas fa-user"></i><strong>Name:</strong> {{ provider[1] }}</p>
+                <p><i class="fas fa-wrench"></i><strong>Service:</strong> {{ provider[3] }}</p>
+                <p><i class="fas fa-map-marker-alt"></i><strong>Location:</strong> {{ provider[4] }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="history-container">
+        <h2>Available Jobs in Your Area</h2>
+        {% if jobs %}
+            <div class="jobs-list">
+                {% for job in jobs %}
+                <div class="job-card">
+                    <div class="job-details">
+                        <p><strong>Client:</strong> {{ job.client }}</p>
+                        <p><strong>Address:</strong> {{ job.address }}</p>
+                        <p><strong>Date:</strong> {{ job.date }} | <strong>Time:</strong> {{ job.time }}</p>
+                        <p><strong>Phone:</strong> {{ job.phone }}</p>
+                    </div>
+                    <div class="job-actions">
+                        <a href="{{ url_for('accept_service', service_id=job.id) }}" class="btn-accept">Accept Job</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-jobs">No jobs available in your area matching your skills right now.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    /* Inline styles for quick prototyping, ideally move to style.css */
+    .job-card {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .job-details p {
+        margin: 5px 0;
+    }
+    .btn-accept {
+        background-color: #28a745;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+    .btn-accept:hover {
+        background-color: #218838;
+    }
+    .no-jobs {
+        font-style: italic;
+        color: #666;
+    }
+</style>
+{% endblock %}
