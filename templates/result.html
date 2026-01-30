@@ -1,0 +1,24 @@
+{% extends 'layout.html' %}
+
+{% block title %}Book a Service - Sahayak{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Book a Service</h2>
+    <form action="{{ url_for('result') }}" method="post">
+        <label for="service_type">Service Type</label>
+        <input type="text" id="service_type" name="service_type" value="{{ service }}" readonly>
+        
+        <label for="date">Preferred Date</label>
+        <input type="date" id="date" name="date" required>
+
+        <label for="time">Preferred Time</label>
+        <input type="time" id="time" name="time" required>
+
+        <label for="address">Your Address</label>
+        <textarea id="address" name="address" readonly>{{ address }}</textarea>
+        
+        <button type="submit">Submit Request</button>
+    </form>
+</div>
+{% endblock %}

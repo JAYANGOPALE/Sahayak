@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+
+{% block title %}Your Profile - Sahayak{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <h2>Your Profile</h2>
+    {% if user %}
+        <p><strong>Username:</strong> {{ user[1] }}</p>
+        <p><strong>Email:</strong> {{ user[5] }}</p>
+        <p><strong>Phone:</strong> {{ user[4] }}</p>
+        <p><strong>Address:</strong> {{ user[3] }}</p>
+    {% else %}
+        <p>User not found.</p>
+    {% endif %}
+</div>
+{% endblock %}

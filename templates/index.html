@@ -1,0 +1,56 @@
+{% extends 'layout.html' %}
+
+{% block title %}Sahayak - Your Home Service Expert{% endblock %}
+
+{% block content %}
+<section class="search-section">
+    <h1>Your Home Service Expert</h1>
+    <p>Get reliable and skilled professionals for all your home needs.</p>
+    <div class="search-container">
+        <input type="text" id="search-bar" placeholder="Search for services (e.g., AC repair, plumber)">
+        <div id="search-results" class="search-results-dropdown"></div>
+    </div>
+</section>
+
+<section class="services-section">
+    <h2>Most Used Services</h2>
+    <div class="service-cards">
+        <div class="card">
+            <a href="{{ url_for('result', service='AC Repair') }}">
+                <img src="https://via.placeholder.com/150" alt="AC Repair">
+                <h3>AC Repair</h3>
+            </a>
+        </div>
+        <div class="card">
+             <a href="{{ url_for('result', service='Plumbing') }}">
+                <img src="https://via.placeholder.com/150" alt="Plumbing">
+                <h3>Plumbing</h3>
+            </a>
+        </div>
+        <div class="card">
+             <a href="{{ url_for('result', service='Electrician') }}">
+                <img src="https://via.placeholder.com/150" alt="Electrician">
+                <h3>Electrician</h3>
+            </a>
+        </div>
+        <div class="card">
+            <a href="{{ url_for('result', service='Carpentry') }}">
+                <img src="https://via.placeholder.com/150" alt="Carpentry">
+                <h3>Carpentry</h3>
+            </a>
+        </div>
+         <div class="card">
+            <a href="{{ url_for('result', service='Painting') }}">
+                <img src="https://via.placeholder.com/150" alt="Painting">
+                <h3>Painting</h3>
+            </a>
+        </div>
+        <div class="card">
+            <a href="{{ url_for('result', service='Cleaning') }}">
+                <img src="https://via.placeholder.com/150" alt="Cleaning">
+                <h3>Cleaning</h3>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
