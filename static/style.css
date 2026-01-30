@@ -10,7 +10,7 @@ body {
 
 /* Header and Footer */
 header {
-    background: linear-gradient(to right, #5c5d5f, #2f3031);
+    background: linear-gradient(to right, #90ade6, #72a3d3);
     color: white;
     padding: 1rem 2rem;
     display: flex;
@@ -122,7 +122,7 @@ main {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: linear-gradient(to right, #b1bacd, #548dc6);
     z-index: 1;
 }
 
@@ -454,26 +454,133 @@ main {
     margin-top: 20px;
 }
 
-/* Profile Container */
-.profile-container {
-    max-width: 600px;
-    margin: 40px auto;
+/* Profile Page */
+.profile-page-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
     padding: 30px;
-    background-color: white;
+    max-width: 1200px;
+    margin: 30px auto;
+}
+
+.profile-card {
+    flex: 1;
+    min-width: 300px;
+    background: white;
+    padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
-.profile-container h2 {
+.profile-header {
+    margin-bottom: 25px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    width: 100%;
+}
+
+.profile-avatar {
+    font-size: 5rem;
+    color: #007BFF;
+    margin-bottom: 15px;
+    border: 3px solid #007BFF;
+    border-radius: 50%;
+    padding: 10px;
+    display: inline-block;
+}
+
+.profile-card h2 {
     font-size: 2rem;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
+    margin: 10px 0 0 0;
+    color: #333;
 }
 
-.profile-container p {
+.profile-info {
+    width: 100%;
+    text-align: left;
+}
+
+.profile-info p {
     font-size: 1.1rem;
-    margin: 15px 0;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    color: #555;
+}
+
+.profile-info p strong {
+    margin-right: 8px;
+    color: #333;
+}
+
+.profile-info p i {
+    font-size: 1.2rem;
+    margin-right: 10px;
+    color: #007BFF;
+    width: 25px;
+    text-align: center;
+}
+
+.history-container {
+    flex: 2;
+    min-width: 400px;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.history-container h2 {
+    font-size: 2rem;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    color: #333;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.history-table th, .history-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.history-table th {
+    background-color: #f7f9fc;
+    font-weight: bold;
+    color: #555;
+}
+
+.history-table tbody tr:hover {
+    background-color: #f0f8ff;
+}
+
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: white;
+    text-transform: capitalize;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-badge.pending {
+    background-color: #ffc107; /* Amber */
+}
+
+.status-badge.completed {
+    background-color: #28a745; /* Green */
 }
 
 /* Toast Notifications */

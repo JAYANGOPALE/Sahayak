@@ -3,15 +3,50 @@
 {% block title %}Your Profile - Sahayak{% endblock %}
 
 {% block content %}
-<div class="profile-container">
-    <h2>Your Profile</h2>
-    {% if user %}
-        <p><strong>Username:</strong> {{ user[1] }}</p>
-        <p><strong>Email:</strong> {{ user[5] }}</p>
-        <p><strong>Phone:</strong> {{ user[4] }}</p>
-        <p><strong>Address:</strong> {{ user[3] }}</p>
-    {% else %}
-        <p>User not found.</p>
-    {% endif %}
+<div class="profile-page-container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <i class="fas fa-user-circle profile-avatar"></i>
+            <h2>{{ user[1] }}'s Profile</h2>
+        </div>
+        {% if user %}
+            <div class="profile-info">
+                <p><i class="fas fa-user"></i><strong>Username:</strong> {{ user[1] }}</p>
+                <p><i class="fas fa-envelope"></i><strong>Email:</strong> {{ user[5] }}</p>
+                <p><i class="fas fa-phone"></i><strong>Phone:</strong> {{ user[4] }}</p>
+                <p><i class="fas fa-map-marker-alt"></i><strong>Address:</strong> {{ user[3] }}</p>
+            </div>
+        {% else %}
+            <p>User not found.</p>
+        {% endif %}
+    </div>
+
+    <div class="history-container">
+        <h2>Service History</h2>
+        {% if history %}
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Service Type</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in history %}
+                    <tr>
+                        <td>{{ item[2] }}</td>
+                        <td>{{ item[3] }}</td>
+                        <td>{{ item[4] }}</td>
+                        <td><span class="status-badge pending">Pending</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No service history found.</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

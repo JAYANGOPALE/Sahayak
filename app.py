@@ -79,7 +79,11 @@ def user_profile():
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
             user_data = cursor.fetchone()
-        return render_template('user.html', user=user_data)
+        with sqlite3.connect('service.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM services WHERE username = ?', (username,))
+            service_history = cursor.fetchall()
+        return render_template('user.html', user=user_data, history=service_history)
     return redirect(url_for('login'))
 
 @app.route('/result', methods=['GET', 'POST'])
