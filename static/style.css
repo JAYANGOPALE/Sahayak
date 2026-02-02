@@ -569,7 +569,8 @@ main {
     padding: 6px 14px;
     border-radius: 20px;
     font-size: 0.9rem;
-    color:#0ad239;
+    color: #ffffff;          /* text color → white */
+    background-color: #0ad239;
     text-transform: capitalize;
     font-weight: 600;
     display: inline-block;
