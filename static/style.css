@@ -569,7 +569,7 @@ main {
     padding: 6px 14px;
     border-radius: 20px;
     font-size: 0.9rem;
-    color: white;
+    color:#0ad239;
     text-transform: capitalize;
     font-weight: 600;
     display: inline-block;
@@ -581,6 +581,14 @@ main {
 
 .status-badge.completed {
     background-color: #28a745; /* Green */
+}
+
+.status-badge.accepted {
+    background-color: #28a745; /* Green */
+}
+
+.status-badge.rejected {
+    background-color: #dc3545; /* Red */
 }
 
 /* Toast Notifications */

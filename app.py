@@ -251,6 +251,18 @@ def accept_service(service_id):
         
     return redirect(url_for('provider_dashboard'))
 
+@app.route('/provider/reject/<int:service_id>')
+def reject_service(service_id):
+    if 'provider_username' not in session:
+        return redirect(url_for('provider_login'))
+        
+    job = ServiceRequest.query.get(service_id)
+    if job:
+        job.status = 'Rejected'
+        db.session.commit()
+        
+    return redirect(url_for('provider_dashboard'))
+
 @app.route('/logout')
 def logout():
     session.pop('username', None)

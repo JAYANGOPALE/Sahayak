@@ -32,6 +32,7 @@
                     </div>
                     <div class="job-actions">
                         <a href="{{ url_for('accept_service', service_id=job.id) }}" class="btn-accept">Accept Job</a>
+                        <a href="{{ url_for('reject_service', service_id=job.id) }}" class="btn-reject">Reject Job</a>
                     </div>
                 </div>
                 {% endfor %}
@@ -67,6 +68,17 @@
     }
     .btn-accept:hover {
         background-color: #218838;
+    }
+    .btn-reject {
+        background-color: #dc3545;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+    .btn-reject:hover {
+        background-color: #c82333;
     }
     .no-jobs {
         font-style: italic;
