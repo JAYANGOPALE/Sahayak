@@ -7,14 +7,14 @@
     <div class="profile-card">
         <div class="profile-header">
             <i class="fas fa-user-circle profile-avatar"></i>
-            <h2>{{ user[1] }}'s Profile</h2>
+            <h2>{{ user.username }}'s Profile</h2>
         </div>
         {% if user %}
             <div class="profile-info">
-                <p><i class="fas fa-user"></i><strong>Username:</strong> {{ user[1] }}</p>
-                <p><i class="fas fa-envelope"></i><strong>Email:</strong> {{ user[5] }}</p>
-                <p><i class="fas fa-phone"></i><strong>Phone:</strong> {{ user[4] }}</p>
-                <p><i class="fas fa-map-marker-alt"></i><strong>Address:</strong> {{ user[3] }}</p>
+                <p><i class="fas fa-user"></i><strong>Username:</strong> {{ user.username }}</p>
+                <p><i class="fas fa-envelope"></i><strong>Email:</strong> {{ user.email }}</p>
+                <p><i class="fas fa-phone"></i><strong>Phone:</strong> {{ user.phone }}</p>
+                <p><i class="fas fa-map-marker-alt"></i><strong>Address:</strong> {{ user.address }}</p>
             </div>
         {% else %}
             <p>User not found.</p>
@@ -36,16 +36,16 @@
                 <tbody>
                     {% for item in history %}
                     <tr>
-                        <td>{{ item[2] }}</td>
-                        <td>{{ item[3] }}</td>
-                        <td>{{ item[4] }}</td>
+                        <td>{{ item.service_type }}</td>
+                        <td>{{ item.date }}</td>
+                        <td>{{ item.time }}</td>
                         <td>
-                            {% if item[5] == 'Pending' %}
+                            {% if item.status == 'Pending' %}
                                 <span class="status-badge pending">Pending</span>
-                            {% elif item[5] == 'Accepted' %}
+                            {% elif item.status == 'Accepted' %}
                                 <span class="status-badge accepted">Accepted</span>
                             {% else %}
-                                <span class="status-badge">{{ item[5] }}</span>
+                                <span class="status-badge">{{ item.status }}</span>
                             {% endif %}
                         </td>
                     </tr>

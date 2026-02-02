@@ -1,8 +1,9 @@
 import os
-import psycopg2
-from psycopg2 import IntegrityError
 from flask import Flask, render_template, request, redirect, url_for, session
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import IntegrityError
 from dotenv import load_dotenv
+from urllib.parse import quote_plus
 
 # Load environment variables from .env file
 load_dotenv()
@@ -10,78 +11,58 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default_secret_key')
 
-# --- Supabase / PostgreSQL Configuration ---
+# --- Supabase / PostgreSQL Configuration (SQLAlchemy) ---
 DB_HOST = os.getenv('DB_HOST')
 DB_NAME = os.getenv('DB_NAME')
 DB_USER = os.getenv('DB_USER')
 DB_PORT = os.getenv('DB_PORT')
 DB_PASS = os.getenv('DB_PASS')
 
-def get_db_connection():
-    conn = psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASS,
-        port=DB_PORT
-    )
-    return conn
+# Construct Database URI with URL-encoded password
+encoded_pass = quote_plus(DB_PASS) if DB_PASS else ""
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{encoded_pass}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# --- Database Initialization ---
-def init_db():
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        
-        # Create Users Table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username TEXT NOT NULL UNIQUE,
-                password TEXT NOT NULL,
-                address TEXT,
-                phone TEXT,
-                email TEXT
-            )
-        ''')
-        
-        # Create Services Table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS services (
-                id SERIAL PRIMARY KEY,
-                username TEXT NOT NULL,
-                service_type TEXT NOT NULL,
-                date TEXT NOT NULL,
-                time TEXT NOT NULL,
-                status TEXT DEFAULT 'Pending'
-            )
-        ''')
+db = SQLAlchemy(app)
 
-        # Create Providers Table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS providers (
-                id SERIAL PRIMARY KEY,
-                username TEXT NOT NULL UNIQUE,
-                password TEXT NOT NULL,
-                service_type TEXT NOT NULL,
-                address TEXT,
-                phone TEXT,
-                email TEXT
-            )
-        ''')
-        
-        conn.commit()
-        cur.close()
-        conn.close()
-        print("Database initialized successfully.")
-    except Exception as e:
-        print(f"Error initializing database: {e}")
+# --- Models ---
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String, unique=True, nullable=False)
+    password = db.Column(db.String, nullable=False)
+    address = db.Column(db.String)
+    phone = db.Column(db.String)
+    email = db.Column(db.String)
+
+class Provider(db.Model):
+    __tablename__ = 'providers'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String, unique=True, nullable=False)
+    password = db.Column(db.String, nullable=False)
+    service_type = db.Column(db.String, nullable=False)
+    address = db.Column(db.String)
+    phone = db.Column(db.String)
+    email = db.Column(db.String)
+
+class ServiceRequest(db.Model):
+    __tablename__ = 'service_request' # Renamed from 'services'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String, db.ForeignKey('users.username'), nullable=False)
+    service_type = db.Column(db.String, nullable=False)
+    date = db.Column(db.String, nullable=False)
+    time = db.Column(db.String, nullable=False)
+    status = db.Column(db.String, default='Pending')
+
+    # Relationship to User (allows accessing service.user.address)
+    user = db.relationship('User', backref='requests')
+
+# --- Routes ---
 
 @app.route('/')
 def index():
     return render_template('index.html')
-
-# --- User Routes ---
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -89,16 +70,10 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
-        conn = get_db_connection()
-        cur = conn.cursor()
-        # Note: Postgres uses %s for placeholders, not ?
-        cur.execute('SELECT * FROM users WHERE username = %s AND password = %s', (username, password))
-        user = cur.fetchone()
-        cur.close()
-        conn.close()
+        user = User.query.filter_by(username=username, password=password).first()
         
         if user:
-            session['username'] = user[1] # username is at index 1
+            session['username'] = user.username
             return redirect(url_for('user_profile'))
         else:
             return 'Invalid credentials'
@@ -113,21 +88,17 @@ def signup():
         phone = request.form['phone']
         address = request.form['address']
         
-        conn = get_db_connection()
-        cur = conn.cursor()
+        new_user = User(username=username, password=password, email=email, phone=phone, address=address)
+        
         try:
-            cur.execute('INSERT INTO users (username, password, email, phone, address) VALUES (%s, %s, %s, %s, %s)',
-                           (username, password, email, phone, address))
-            conn.commit()
+            db.session.add(new_user)
+            db.session.commit()
+            session['username'] = username
+            return redirect(url_for('user_profile'))
         except IntegrityError:
-            conn.rollback()
+            db.session.rollback()
             return 'Username already exists'
-        finally:
-            cur.close()
-            conn.close()
             
-        session['username'] = username
-        return redirect(url_for('user_profile'))
     return render_template('signup.html')
 
 @app.route('/user')
@@ -135,21 +106,19 @@ def user_profile():
     if 'username' in session:
         username = session['username']
         
-        conn = get_db_connection()
-        cur = conn.cursor()
+        user = User.query.filter_by(username=username).first()
+        # Fetch Service History (ordered by id desc for latest first, optional but nice)
+        history = ServiceRequest.query.filter_by(username=username).order_by(ServiceRequest.id.desc()).all()
         
-        # Fetch User Data
-        cur.execute('SELECT * FROM users WHERE username = %s', (username,))
-        user_data = cur.fetchone()
+        # We need to pass data in a format the template expects (tuples or objects).
+        # The template currently expects tuples: item[2], item[3] etc.
+        # But with ORM we pass objects: item.service_type, item.date.
+        # **TEMPLATE CHANGE REQUIRED** or we simulate tuples? 
+        # Better to update the Template to use object attributes.
+        # For now, I will let the user know, OR I can modify the template.
+        # Actually, let's pass the objects and I will update the template in the next step.
         
-        # Fetch Service History
-        cur.execute('SELECT * FROM services WHERE username = %s', (username,))
-        service_history = cur.fetchall()
-        
-        cur.close()
-        conn.close()
-        
-        return render_template('user.html', user=user_data, history=service_history)
+        return render_template('user.html', user=user, history=history)
     return redirect(url_for('login'))
 
 @app.route('/result', methods=['GET', 'POST'])
@@ -163,27 +132,23 @@ def result():
         time = request.form['time']
         username = session['username']
         
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute('INSERT INTO services (username, service_type, date, time, status) VALUES (%s, %s, %s, %s, %s)',
-                       (username, service_type, date, time, 'Pending'))
-        conn.commit()
-        cur.close()
-        conn.close()
+        new_request = ServiceRequest(
+            username=username,
+            service_type=service_type,
+            date=date,
+            time=time,
+            status='Pending'
+        )
+        db.session.add(new_request)
+        db.session.commit()
         
         return redirect(url_for('user_profile'))
 
     service = request.args.get('service')
     username = session.get('username')
     
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT address FROM users WHERE username = %s', (username,))
-    address_row = cur.fetchone()
-    cur.close()
-    conn.close()
-    
-    return render_template('result.html', service=service, address=address_row[0] if address_row else '')
+    user = User.query.filter_by(username=username).first()
+    return render_template('result.html', service=service, address=user.address if user else '')
 
 # --- Provider Routes ---
 
@@ -193,15 +158,10 @@ def provider_login():
         username = request.form['username']
         password = request.form['password']
         
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute('SELECT * FROM providers WHERE username = %s AND password = %s', (username, password))
-        provider = cur.fetchone()
-        cur.close()
-        conn.close()
+        provider = Provider.query.filter_by(username=username, password=password).first()
         
         if provider:
-            session['provider_username'] = provider[1]
+            session['provider_username'] = provider.username
             return redirect(url_for('provider_dashboard'))
         else:
             return 'Invalid credentials'
@@ -217,21 +177,24 @@ def provider_signup():
         address = request.form['address']
         service_type = request.form['service_type']
         
-        conn = get_db_connection()
-        cur = conn.cursor()
+        new_provider = Provider(
+            username=username,
+            password=password,
+            email=email,
+            phone=phone,
+            address=address,
+            service_type=service_type
+        )
+        
         try:
-            cur.execute('INSERT INTO providers (username, password, service_type, address, phone, email) VALUES (%s, %s, %s, %s, %s, %s)',
-                           (username, password, service_type, address, phone, email))
-            conn.commit()
+            db.session.add(new_provider)
+            db.session.commit()
+            session['provider_username'] = username
+            return redirect(url_for('provider_dashboard'))
         except IntegrityError:
-            conn.rollback()
+            db.session.rollback()
             return 'Username already exists'
-        finally:
-            cur.close()
-            conn.close()
             
-        session['provider_username'] = username
-        return redirect(url_for('provider_dashboard'))
     return render_template('provider_signup.html')
 
 @app.route('/provider/dashboard')
@@ -241,50 +204,38 @@ def provider_dashboard():
     
     username = session['provider_username']
     
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    # Get provider details
-    cur.execute('SELECT * FROM providers WHERE username = %s', (username,))
-    provider = cur.fetchone()
+    provider = Provider.query.filter_by(username=username).first()
     
     if not provider:
-        cur.close()
-        conn.close()
         return redirect(url_for('provider_login'))
         
-    provider_service_type = provider[3]
-    provider_address = provider[4].lower()
+    provider_service_type = provider.service_type
+    provider_address = provider.address.lower()
     
     # Find matching services
-    # Ideally, we would do a JOIN in SQL, but keeping logic similar to before for now
+    # ORM makes this easier. We can fetch pending services of the type, 
+    # and because of the relationship, we can check the user's address.
+    
+    potential_jobs = ServiceRequest.query.filter_by(
+        service_type=provider_service_type, 
+        status='Pending'
+    ).all()
+    
     available_jobs = []
     
-    # Fetch all pending services of the matching type
-    cur.execute('SELECT * FROM services WHERE service_type = %s AND status = %s', (provider_service_type, 'Pending'))
-    services = cur.fetchall()
-    
-    for service in services:
-        client_username = service[1]
-        # Fetch user details for this service
-        # Using a separate cursor execution inside the loop (not efficient for huge data, but fine for now)
-        cur.execute('SELECT address, phone, email FROM users WHERE username = %s', (client_username,))
-        user_info = cur.fetchone()
-        
-        if user_info:
-            user_address = user_info[0].lower()
+    for job in potential_jobs:
+        # Access the related User object directly
+        if job.user:
+            user_address = job.user.address.lower()
             if provider_address in user_address or user_address in provider_address:
                 available_jobs.append({
-                    'id': service[0],
-                    'client': client_username,
-                    'date': service[3],
-                    'time': service[4],
-                    'address': user_info[0],
-                    'phone': user_info[1]
+                    'id': job.id,
+                    'client': job.username,
+                    'date': job.date,
+                    'time': job.time,
+                    'address': job.user.address,
+                    'phone': job.user.phone
                 })
-    
-    cur.close()
-    conn.close()
                     
     return render_template('provider_dashboard.html', provider=provider, jobs=available_jobs)
 
@@ -293,12 +244,10 @@ def accept_service(service_id):
     if 'provider_username' not in session:
         return redirect(url_for('provider_login'))
         
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('UPDATE services SET status = %s WHERE id = %s', ('Accepted', service_id))
-    conn.commit()
-    cur.close()
-    conn.close()
+    job = ServiceRequest.query.get(service_id)
+    if job:
+        job.status = 'Accepted'
+        db.session.commit()
         
     return redirect(url_for('provider_dashboard'))
 
@@ -309,7 +258,6 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # Initialize DB (Create tables if they don't exist)
-    init_db()
-    # Host 0.0.0.0 is still useful if you want to test on local LAN before deploying
+    with app.app_context():
+        db.create_all()
     app.run(host='0.0.0.0', debug=True)
