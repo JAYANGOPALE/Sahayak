@@ -569,7 +569,7 @@ main {
     padding: 6px 14px;
     border-radius: 20px;
     font-size: 0.9rem;
-    color: #ffffff;          /* text color → white */
+    color: #ffffff;
     background-color: #0ad239;
     text-transform: capitalize;
     font-weight: 600;
@@ -628,3 +628,20 @@ main {
     background-color: #dc3545;
 }
 
+/* Flash Messages */
+.flashes {
+    list-style: none;
+    padding: 15px 20px;
+    margin: 20px auto;
+    max-width: 800px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.flashes li.error {
+    background-color: #f8d7da; /* Light red background */
+    color: #721c24; /* Dark red text */
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 5px;
+}

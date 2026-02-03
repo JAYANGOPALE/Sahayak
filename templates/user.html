@@ -46,6 +46,12 @@
                                 <span class="status-badge accepted">Accepted</span>
                             {% elif item.status == 'Rejected' %}
                                 <span class="status-badge rejected">Rejected</span>
+                            {% elif item.status == 'ACCEPTED_UNPAID' %}
+                                <span class="status-badge pending">Payment Pending</span>
+                            {% elif item.status == 'PAYMENT_SUCCESS' %}
+                                <span class="status-badge accepted">Paid</span>
+                            {% elif item.status == 'PAYMENT_FAILED' %}
+                                <span class="status-badge rejected">Payment Failed</span>
                             {% else %}
                                 <span class="status-badge">{{ item.status }}</span>
                             {% endif %}
@@ -59,4 +65,15 @@
         {% endif %}
     </div>
 </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if history and history[0].status == 'ACCEPTED_UNPAID' %}
+            window.location.href = "{{ url_for('payment', service_id=history[0].id) }}";
+        {% endif %}
+    });
+</script>
 {% endblock %}

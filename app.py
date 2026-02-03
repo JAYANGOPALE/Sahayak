@@ -1,7 +1,7 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
 
@@ -20,7 +20,7 @@ DB_PASS = os.getenv('DB_PASS')
 
 # Construct Database URI with URL-encoded password
 encoded_pass = quote_plus(DB_PASS) if DB_PASS else ""
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{encoded_pass}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql+psycopg2://{DB_USER}:{encoded_pass}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -50,13 +50,29 @@ class ServiceRequest(db.Model):
     __tablename__ = 'service_request' # Renamed from 'services'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, db.ForeignKey('users.username'), nullable=False)
+    provider_id = db.Column(db.Integer, db.ForeignKey('providers.id'))
     service_type = db.Column(db.String, nullable=False)
     date = db.Column(db.String, nullable=False)
     time = db.Column(db.String, nullable=False)
     status = db.Column(db.String, default='Pending')
+    cost = db.Column(db.Float, default=0.0)
 
     # Relationship to User (allows accessing service.user.address)
     user = db.relationship('User', backref='requests')
+    provider = db.relationship('Provider', backref='requests')
+
+class Transaction(db.Model):
+    __tablename__ = 'transactions'
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.Integer, db.ForeignKey('service_request.id'), nullable=False)
+    provider_id = db.Column(db.Integer, db.ForeignKey('providers.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String, default='Pending')
+    transaction_id = db.Column(db.String)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    service = db.relationship('ServiceRequest', backref='transactions')
+    provider = db.relationship('Provider', backref='transactions')
 
 # --- Routes ---
 
@@ -70,13 +86,17 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
-        user = User.query.filter_by(username=username, password=password).first()
-        
-        if user:
-            session['username'] = user.username
-            return redirect(url_for('user_profile'))
-        else:
-            return 'Invalid credentials'
+        try:
+            user = User.query.filter_by(username=username, password=password).first()
+            if user:
+                session['username'] = user.username
+                return redirect(url_for('user_profile'))
+            else:
+                flash('Invalid credentials. Please try again.', 'error')
+                return redirect(url_for('login'))
+        except OperationalError:
+            flash('Login credentials wrong. Please try again.', 'error')
+            return redirect(url_for('login'))
     return render_template('login.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -98,6 +118,9 @@ def signup():
         except IntegrityError:
             db.session.rollback()
             return 'Username already exists'
+        except OperationalError as e:
+            db.session.rollback()
+            return render_template('error.html', error_message=str(e))
             
     return render_template('signup.html')
 
@@ -106,18 +129,18 @@ def user_profile():
     if 'username' in session:
         username = session['username']
         
-        user = User.query.filter_by(username=username).first()
-        # Fetch Service History (ordered by id desc for latest first, optional but nice)
-        history = ServiceRequest.query.filter_by(username=username).order_by(ServiceRequest.id.desc()).all()
+        try:
+            user = User.query.filter_by(username=username).first()
+            history = ServiceRequest.query.filter_by(username=username).order_by(ServiceRequest.id.desc()).all()
+        except OperationalError:
+            flash('A database error occurred. Please try again later.', 'error')
+            return redirect(url_for('user_profile'))
         
-        # We need to pass data in a format the template expects (tuples or objects).
-        # The template currently expects tuples: item[2], item[3] etc.
-        # But with ORM we pass objects: item.service_type, item.date.
-        # **TEMPLATE CHANGE REQUIRED** or we simulate tuples? 
-        # Better to update the Template to use object attributes.
-        # For now, I will let the user know, OR I can modify the template.
-        # Actually, let's pass the objects and I will update the template in the next step.
-        
+        # Check for unpaid services and redirect if necessary
+        for service in history:
+            if service.status == 'ACCEPTED_UNPAID':
+                return redirect(url_for('payment', service_id=service.id))
+                
         return render_template('user.html', user=user, history=history)
     return redirect(url_for('login'))
 
@@ -139,15 +162,22 @@ def result():
             time=time,
             status='Pending'
         )
-        db.session.add(new_request)
-        db.session.commit()
+        try:
+            db.session.add(new_request)
+            db.session.commit()
+        except OperationalError as e:
+            db.session.rollback()
+            return render_template('error.html', error_message=str(e))
         
         return redirect(url_for('user_profile'))
 
     service = request.args.get('service')
     username = session.get('username')
     
-    user = User.query.filter_by(username=username).first()
+    try:
+        user = User.query.filter_by(username=username).first()
+    except OperationalError as e:
+        return render_template('error.html', error_message=str(e))
     return render_template('result.html', service=service, address=user.address if user else '')
 
 # --- Provider Routes ---
@@ -158,13 +188,17 @@ def provider_login():
         username = request.form['username']
         password = request.form['password']
         
-        provider = Provider.query.filter_by(username=username, password=password).first()
-        
-        if provider:
-            session['provider_username'] = provider.username
-            return redirect(url_for('provider_dashboard'))
-        else:
-            return 'Invalid credentials'
+        try:
+            provider = Provider.query.filter_by(username=username, password=password).first()
+            if provider:
+                session['provider_username'] = provider.username
+                return redirect(url_for('provider_dashboard'))
+            else:
+                flash('Invalid credentials. Please try again.', 'error')
+                return redirect(url_for('provider_login'))
+        except OperationalError:
+            flash('Login credentials wrong. Please try again.', 'error')
+            return redirect(url_for('provider_login'))
     return render_template('provider_login.html')
 
 @app.route('/provider/signup', methods=['GET', 'POST'])
@@ -194,6 +228,9 @@ def provider_signup():
         except IntegrityError:
             db.session.rollback()
             return 'Username already exists'
+        except OperationalError as e:
+            db.session.rollback()
+            return render_template('error.html', error_message=str(e))
             
     return render_template('provider_signup.html')
 
@@ -204,7 +241,10 @@ def provider_dashboard():
     
     username = session['provider_username']
     
-    provider = Provider.query.filter_by(username=username).first()
+    try:
+        provider = Provider.query.filter_by(username=username).first()
+    except OperationalError as e:
+        return render_template('error.html', error_message=str(e))
     
     if not provider:
         return redirect(url_for('provider_login'))
@@ -216,10 +256,13 @@ def provider_dashboard():
     # ORM makes this easier. We can fetch pending services of the type, 
     # and because of the relationship, we can check the user's address.
     
-    potential_jobs = ServiceRequest.query.filter_by(
-        service_type=provider_service_type, 
-        status='Pending'
-    ).all()
+    try:
+        potential_jobs = ServiceRequest.query.filter_by(
+            service_type=provider_service_type, 
+            status='Pending'
+        ).all()
+    except OperationalError as e:
+        return render_template('error.html', error_message=str(e))
     
     available_jobs = []
     
@@ -243,11 +286,33 @@ def provider_dashboard():
 def accept_service(service_id):
     if 'provider_username' not in session:
         return redirect(url_for('provider_login'))
+
+    provider_username = session['provider_username']
+    
+    try:
+        provider = Provider.query.filter_by(username=provider_username).first()
+        job = ServiceRequest.query.get(service_id)
+    except OperationalError as e:
+        return render_template('error.html', error_message=str(e))
+
+    if job and provider:
+        job.status = 'ACCEPTED_UNPAID'
+        job.provider_id = provider.id
+        job.cost = 500.00  # Hardcoded cost for now
         
-    job = ServiceRequest.query.get(service_id)
-    if job:
-        job.status = 'Accepted'
-        db.session.commit()
+        # Create a new transaction
+        new_transaction = Transaction(
+            service_id=job.id,
+            provider_id=provider.id,
+            amount=job.cost,
+            status='Pending'
+        )
+        try:
+            db.session.add(new_transaction)
+            db.session.commit()
+        except OperationalError as e:
+            db.session.rollback()
+            return render_template('error.html', error_message=str(e))
         
     return redirect(url_for('provider_dashboard'))
 
@@ -256,12 +321,84 @@ def reject_service(service_id):
     if 'provider_username' not in session:
         return redirect(url_for('provider_login'))
         
-    job = ServiceRequest.query.get(service_id)
+    try:
+        job = ServiceRequest.query.get(service_id)
+    except OperationalError as e:
+        return render_template('error.html', error_message=str(e))
+    
     if job:
         job.status = 'Rejected'
-        db.session.commit()
+        try:
+            db.session.commit()
+        except OperationalError as e:
+            db.session.rollback()
+            return render_template('error.html', error_message=str(e))
         
     return redirect(url_for('provider_dashboard'))
+
+# --- Payment Routes ---
+
+@app.route('/payment/<int:service_id>')
+def payment(service_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        service = ServiceRequest.query.get(service_id)
+    except OperationalError as e:
+        return render_template('error.html', error_message=str(e))
+    
+    if not service or service.username != session['username']:
+        return "Service not found or not authorized", 404
+
+    return render_template('payment.html', service=service)
+
+@app.route('/payment/success/<int:service_id>')
+def payment_success(service_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        service = ServiceRequest.query.get(service_id)
+        transaction = Transaction.query.filter_by(service_id=service_id).first()
+    except OperationalError:
+        flash('A database error occurred during payment confirmation. Please contact support.', 'error')
+        return redirect(url_for('user_profile'))
+
+    if service and transaction:
+        service.status = 'PAYMENT_SUCCESS'
+        transaction.status = 'Success'
+        transaction.transaction_id = 'DUMMY_TRANSACTION_ID_12345'
+        try:
+            db.session.commit()
+        except OperationalError as e:
+            db.session.rollback()
+            return render_template('error.html', error_message=str(e))
+
+    return redirect(url_for('user_profile'))
+
+@app.route('/payment/failed/<int:service_id>')
+def payment_failed(service_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        service = ServiceRequest.query.get(service_id)
+        transaction = Transaction.query.filter_by(service_id=service_id).first()
+    except OperationalError:
+        flash('A database error occurred during payment failure processing. Please contact support.', 'error')
+        return redirect(url_for('user_profile'))
+
+    if service and transaction:
+        service.status = 'PAYMENT_FAILED'
+        transaction.status = 'Failed'
+        try:
+            db.session.commit()
+        except OperationalError as e:
+            db.session.rollback()
+            return render_template('error.html', error_message=str(e))
+
+    return redirect(url_for('user_profile'))
 
 @app.route('/logout')
 def logout():
@@ -270,6 +407,6 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
+    # with app.app_context():
+    #     db.create_all()
     app.run(host='0.0.0.0', debug=True)
