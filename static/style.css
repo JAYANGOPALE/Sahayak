@@ -569,8 +569,12 @@ main {
     padding: 6px 14px;
     border-radius: 20px;
     font-size: 0.9rem;
+<<<<<<< HEAD
     color: #ffffff;
     background-color: #0ad239;
+=======
+    color:#0ad239;
+>>>>>>> parent of 5f69b95 (l)
     text-transform: capitalize;
     font-weight: 600;
     display: inline-block;
